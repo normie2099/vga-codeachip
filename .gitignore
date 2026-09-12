@@ -1,0 +1,24 @@
+# --- Required by the project plan (codeachip-execution-workflow.md, Phase 0) ---
+# ngspice raw output is huge and fully regenerable from cached LUTs/netlists — never commit.
+*.raw
+*.log
+xschem/simulation/
+
+# --- Standard additions (not in the plan doc, but harmless boilerplate) ---
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+
+# Do NOT add cache/ or images/ here — the plan commits those deliberately
+# (they're the reproducibility artefacts a reviewer needs). If you're tempted
+# to .gitignore them because they're growing large, that's a signal to
+# downsample the LUT, not to stop committing it.
