@@ -42,8 +42,30 @@ def md_table(header, rows, align=None):
     out += ["| " + " | ".join(map(str, r)) + " |" for r in rows]
     return "\n".join(out)
 
+# Supporting tables are shown collapsed ("Show the table") so the results read first; the headline tables
+# (Tables 9b, 10b, 11c, 14b, 17d, 17e, 17g, 20c, 21b, 23, 26, 27, 28) stay open. Set FOLD = set() to open them all.
+FOLD = {"1", "1b", "4", "5", "6", "7", "8", "9", "10", "10c", "10d", "11", "11b", "11d", "12", "12b", "13", "14", "15",
+        "16", "17", "17b", "17c", "17f", "18", "19", "20", "20b", "21", "21c", "21d", "21e", "22", "24", "27b", "27c",
+        "27d", "27e", "28b", "28c"}
+
+def _fold(text):
+    """Wrap every markdown table block of `text` in <details>; the caption and any prose stay visible."""
+    lines, out, i = text.split("\n"), [], 0
+    while i < len(lines):
+        if lines[i].lstrip().startswith("|"):
+            j = i
+            while j < len(lines) and lines[j].lstrip().startswith("|"): j += 1
+            out += [f"<details><summary>Show the table ({j - i - 2} rows)</summary>", "", *lines[i:j], "", "</details>"]
+            i = j
+        else:
+            out.append(lines[i]); i += 1
+    return "\n".join(out)
+
 def show_md(text):
-    from IPython.display import display, Markdown; display(Markdown(text))
+    from IPython.display import display, Markdown
+    import re as _re
+    m = _re.search(r"\*Table (\d+[a-z]?)\.", text[:300])
+    display(Markdown(_fold(text) if m and m.group(1) in FOLD else text))
 
 def fmt(x, nd=2, unit=""):
     if x is None or (isinstance(x, float) and math.isnan(x)): return "—"
