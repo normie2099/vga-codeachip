@@ -42,7 +42,7 @@ def md_table(header, rows, align=None):
     out += ["| " + " | ".join(map(str, r)) + " |" for r in rows]
     return "\n".join(out)
 
-# Supporting tables are shown collapsed ("Show the table") so the results read first; the headline tables
+# Supporting tables are shown collapsed ("Table data (N rows)"; Jupyter and Colab collapse them, GitHub shows them open), so the results read first; the headline tables
 # (Tables 9b, 10b, 11c, 14b, 17d, 17e, 17g, 20c, 21b, 23, 26, 27, 28) stay open. Set FOLD = set() to open them all.
 FOLD = {"1", "1b", "4", "5", "6", "7", "8", "9", "10", "10c", "10d", "11", "11b", "11d", "12", "12b", "13", "14", "15",
         "16", "17", "17b", "17c", "17f", "18", "19", "20", "20b", "21", "21c", "21d", "21e", "22", "24", "27b", "27c",
@@ -55,7 +55,7 @@ def _fold(text):
         if lines[i].lstrip().startswith("|"):
             j = i
             while j < len(lines) and lines[j].lstrip().startswith("|"): j += 1
-            out += [f"<details><summary>Show the table ({j - i - 2} rows)</summary>", "", *lines[i:j], "", "</details>"]
+            out += [f"<details><summary>Table data ({j - i - 2} rows)</summary>", "", *lines[i:j], "", "</details>"]
             i = j
         else:
             out.append(lines[i]); i += 1
