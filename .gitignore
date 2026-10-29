@@ -1,14 +1,9 @@
-CLAUDE.md
-executed_failed.ipynb
 .DS_Store
 __pycache__/
 .ipynb_checkpoints/
+executed_failed.ipynb
 *.raw
-run.log
-numbers.txt
 *.log
-run.log
-.ipynb_checkpoints/
 cache/lut_corners.npz
 
 # the sign-off evidence logs are committed on purpose

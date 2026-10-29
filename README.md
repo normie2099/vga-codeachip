@@ -4,11 +4,13 @@ IEEE SSCS Code-a-Chip, ISSCC 2027. Notebook: `notebook.ipynb`. License: Apache-2
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/normie2099/sscs-ose-code-a-chip.github.io/blob/subthreshold-vga-gmid/ISSCC27/submitted_notebooks/subthreshold_vga_gmid/notebook.ipynb) runs tier 1 (cached results, no SPICE).
 
+**Team:** Ayush Krishna Balabadra (team representative and travel-grant recipient) and Vrinda Pandey, VIT Vellore.
+
 **Scope:** the gain core of a hearing-aid compressor and the flow that sizes it. No envelope detector or gain-control
 loop, so no compression behaviour is claimed.
 
 ## What this work adds to the earlier Code-a-Chip lookup-table flows (ISSCC'25, ISSCC'26)
-**Those flows showed that tables can size a circuit from its specification. This one sizes for all 24 process, temperature and supply corners at once, with one sizing and one layout: it shows that the hand-sized core cannot meet the specification, sizes a designer's fix, and sizes it again after its own first layout broke the pick. Its tables are exact because every transistor is built from whole 5 µm fingers.**
+Those flows showed that tables can size a circuit from its specification. This one sizes for all 24 process, temperature and supply corners at once, with one sizing and one layout. It finds that the hand-sized core cannot meet the specification, sizes a designer's fix, and sizes it again after its own first layout broke the pick.
 
 1. **Exact tables, with measured error.** Current density at fixed bias differs by up to 1.6× (NMOS) and 4.6× (PMOS) between finger widths, so a table made at one width does not carry to another. With whole fingers it does. The model on the tables takes 7.4 ms per design and corner and is within **0.40 dB** (gain) and **1.3 %** (noise) of SPICE on 42 random designs. Its worst bandwidth over-estimate is 17 % (under-estimates reach 74 % and only make the screen stricter), so SPICE decides every pick (§5–§6).
 2. **The hand-sized nine-transistor core cannot reach the 30 dB control range, and the flow says why.** None of 12,164 sizings does (best 10.4 dB). The output devices starve as the gain falls (§3.4, §7).
@@ -28,31 +30,9 @@ loop, so no compression behaviour is claimed.
 
 *The 9T column is the hand-sized baseline at its worst corner (SPICE); the 10.4 dB of finding 2 is the best of the 12,164 sizings at tt (table model).*
 
-## Results in detail
-A **finger-exact $g_m/I_D$ lookup-table flow** that takes a specification to a SPICE-verified subthreshold current-steering
-VGA core in open SKY130, and the core it produced. Every transistor is built from identical 5 µm fingers, so the
-device tables are exact. The circuit model on them runs in 7.4 ms per design and corner and stays within
-**0.40 dB** (gain) and **1.3 %** (noise) of SPICE on 42 random designs; its worst
-bandwidth over-estimate is 17 % (under-estimates reach 74 % and only make the screen stricter; Table 9b), so SPICE decides every pick.
+![Worst headroom at every corner: sized at tt alone against the flow's pick](images/tt_only_vs_flow.png)
 
-**The hand-sized nine-transistor core cannot meet the specification:** none of 12,164 sizings reaches the 30 dB
-control range (best 10.4 dB), and the flow reports range as a limit no solved design meets. The analysis of
-§3.4 explains why (the output devices starve as the gain falls), and a designer added **two keep-alive sinks and a reference
-diode**. On that 12-transistor core, **none** of the 138,240 designs of the starting grid met all 24 corners;  the search extension grew the grid for 32 rounds (5,874 more designs), found the first design meeting every corner in round 5 and lowered the best noise to 6.72 µV (LUT). Sized at tt alone, the same grid's pick passes at tt but fails 11 of 24 corners in SPICE, 10 of them even without the flow's headroom margin (Table 14b, Figure 7c).
-
-**Layout in the loop:** a first layout (drawn for an interim sizing) puts 207 fF of wiring on the output; with it, the first pass's pick fails at 6 of 24 corners (bandwidth at the lowest gain step), and every design of that pass sits too close to the bandwidth margin to absorb it. The fitted equivalent, 0.3 pF, becomes part of the load and the flow runs again: 35 of 35 verified designs pass, and the new pick passes every corner with that layout's extracted capacitors added (and with them scaled ×1.5).
-
-**The final pick** passes all 24 gate corners and 21 of the 21 other corners of the process × temperature ×
-supply grid: control range ≥ **47.0 dB**, bandwidth ≥ **11.8 kHz** with the wiring allowance, supply
-**4.63–4.83 µA** (≤ 5 µA with 3σ of bias mismatch), headroom ≥ **173 mV** at every
-control step. At tt it has **6.88 µV** of integrated input noise (up to 8.4 µV at the noisiest corner),
-60 nV/√Hz at 1 kHz and NEF **4.08**, in 17,120 µm² of gate area, and meets
-**6 of 7** graded targets; it misses noise density at 1 kHz (Table 20c).
-Monte Carlo with the PDK's per-device mismatch model: **800 of 800**
-dies pass the full gate at 4 corners behind an ideal output DC servo. Without a servo, 198 of 200 dies keep their headroom at the worst of these corners; the servo must source or sink 88 nA to cover 99.7 % of dies.
-
-**Final layout** (§13, gLayout generator, from the frozen sizes): DRC-clean (3 rule decks natively, the 2 installed in IIC-OSIC-TOOLS) and LVS-clean, device sizes included, in both runs, whose LVS also rejects 6 of 6 deliberately altered netlists. Magic's antenna check finds **0** violations, and the official KLayout deck's off-by-default off-grid and floating-metal checks find **0**; each check flags its control (5, 4 and 2 flagged), and no KLayout antenna deck was run. The extracted netlist (724 transistor fingers as drawn, 44 of them dummies; 55 extracted capacitors, 49 non-zero) passes all 24 corners of the same gate: bandwidth ≥ **12.3 kHz** (worst at sf/85/1.62V), headroom ≥ 173 mV, 6.88 µV at tt, and it still passes with every extracted capacitor ×1.5. Its parasitics act like 236 fF on the output, inside the 300 fF allowance the sizes were frozen with. With resistance extracted too (68,749 resistors; 218–466 Ω from each signal pin to its farthest transistor, RC poles ≥ 0.88 GHz) it passes the gate at the 3 corners that bound it, its bandwidth within 0.02 % of the capacitance-only result.
-
+*Worst headroom at each corner (Figure 7c of the notebook). Red: sized at tt alone; blue: the flow's pick.*
 
 ## Specification compliance (SPICE, schematic level, 24 corners)
 
@@ -74,35 +54,7 @@ dies pass the full gate at 4 corners behind an ideal output DC servo. Without a 
 | Input offset, 1σ, max gain | report | 3.35 mV | — | 0.58 mV | — | — | — |
 | Open-loop output DC spread, 1σ, max gain | report | 2621 mV | — | 65 mV | — | — | — |
 
-## Claims and where they are tested
-
-| Claim | Evidence (notebook) | Holds |
-|:--|:--:|:--:|
-| No 9T sizing meets the control-range gate | Tables 10c–10d | yes |
-| Evaluator headroom error on random designs is inside the screen's headroom margin | Tables 9b, 10b | yes |
-| Evaluator bandwidth over-estimate on random designs (17.4 %) is inside the screen's bandwidth margin (12 %); every pick is decided in SPICE either way | Tables 9b, 10b | no |
-| Evaluator ranks designs as SPICE does (Spearman ≥ 0.99 for noise and bandwidth) | Table 9b | yes |
-| Corner tables predict SPICE headroom and bandwidth inside the screening margins at every corner | Table 12b | yes |
-| Every verified front design passes at every corner (both passes) | Tables 12, 17c | yes |
-| Sizing at tt alone (same grid, model, margins and pick rule) ships a design that fails corners in SPICE, also against the specification's headroom without the flow's margin | Table 14b | yes |
-| The final pick passes every corner with the first layout's extracted capacitors added | §9.3 | yes |
-| The final layout is DRC- and LVS-clean (device sizes included) in a native and a container run, and its LVS rejects every deliberately altered netlist | Tables 27, 27b | yes |
-| The extracted final layout passes every corner of the gate, also with every extracted capacitor ×1.5 | Table 28 | yes |
-| With resistance extracted too, the final layout passes the gate at the corners that bound the capacitance-only result | Table 28c | yes |
-| The final layout has no Magic antenna violation and no finding of the official KLayout deck's off-by-default off-grid and floating-metal checks, and each check flags its control (a Magic antenna check; no KLayout antenna deck was run) | Table 27c | yes |
-| The pick meets range, bandwidth, current and headroom at every corner, supply corners included | Table 17e | yes |
-| The hand-screened 12T fails headroom mid-span | Table 16 | yes |
-| With an ideal reference current, the pick's supply current moves by less than 5 % across corners | Table 17e | yes |
-| Control range follows the steering law within 10 % at every temperature (SPICE/law ratio, law with the fitted n) | Table 18 | yes |
-| PTAT-scaled control removes most of the temperature dependence | Table 18 | yes |
-| The pick passes the gate at V_DD ± 10 % | Table 20 | yes |
-| The search extension converged (stopped on its improvement criterion, not on the round limit) | Table 11b | yes |
-| No single-axis step from the pick wins under the pick rule (checked in SPICE where the LUT says it might) | Table 17f | yes |
-| Monte Carlo: every die passes the gate behind an ideal output servo, at tt and at the pick's most critical corners | Table 21b | yes |
-| DC-match predicts the Monte Carlo open-loop output spread within 15 % | Tables 21, 21b | yes |
-| The flow's supply-current mismatch sigma (1.00 %) matches Monte Carlo (1.05 %) within two standard errors of a 200-die estimate | Table 21b | yes |
-| The LVS netlist reproduces the pick in SPICE | §9.4 | yes |
-| Integrated input noise ≤ 7 µV at maximum gain, tt (the target's condition; every corner in Table 20b) | Table 23 | yes |
+Every claim above is listed, with the test that checks it, in the notebook's claims ledger (Table 24).
 
 ## The pick: devices and bias (every width is whole 5 µm fingers)
 
@@ -150,6 +102,10 @@ LVS reference netlist: `layout/vga_core_12t.spice` (generated by the notebook). 
 **The 12T flow: grid, extension and the first pass's pick**
 
 ![The 12T flow: grid, extension and the first pass's pick](images/front_12t.png)
+
+**Sized at tt alone against the flow's pick: worst headroom at every corner**
+
+![Sized at tt alone against the flow's pick: worst headroom at every corner](images/tt_only_vs_flow.png)
 
 **Layout in the loop: the first layout's wiring and the two picks**
 
