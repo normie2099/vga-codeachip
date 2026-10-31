@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run notebook.ipynb headless, so you never have to flip flags or click Run All by hand.
+"""Run subthreshold_vga_gmid.ipynb headless, so you never have to flip flags or click Run All by hand.
 
   python tools/run_nb.py                 # tier1 : cache only, ~1 min  (what a judge runs)
   python tools/run_nb.py --mode spice    # re-run every SPICE sim, then a clean tier-1 pass
@@ -38,7 +38,7 @@ def run(nb, cwd, timeout, label):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--nb", default="notebook.ipynb")
+    ap.add_argument("--nb", default="subthreshold_vga_gmid.ipynb")
     ap.add_argument("--mode", choices=list(FLAGS), default="tier1")
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--no-save", action="store_true", help="execute but do not overwrite the notebook")

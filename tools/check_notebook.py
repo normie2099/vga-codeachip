@@ -70,7 +70,7 @@ def prose_check(nb, results):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--nb", default="notebook.ipynb"); ap.add_argument("--final", action="store_true")
+    ap.add_argument("--nb", default="subthreshold_vga_gmid.ipynb"); ap.add_argument("--final", action="store_true")
     ap.add_argument("--numbers", action="store_true"); a = ap.parse_args()
     nbp = Path(a.nb).resolve(); root = nbp.parent
     nb = json.loads(nbp.read_text(encoding="utf-8")); E, W = [], []

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Make notebook.ipynb render the same in every viewer (Jupyter, JupyterLab, VS Code, GitHub, Colab, simple previewers).
+"""Make subthreshold_vga_gmid.ipynb render the same in every viewer (Jupyter, JupyterLab, VS Code, GitHub, Colab, simple previewers).
 
-  python tools/finalize_nb.py [notebook.ipynb]      (idempotent; run_nb.py calls it after every save)
+  python tools/finalize_nb.py [subthreshold_vga_gmid.ipynb]      (idempotent; run_nb.py calls it after every save)
 
  1. Output text (markdown, html, plain text, stream) is stored as ONE string instead of a list of lines. Both forms are
     valid nbformat and Jupyter reads either, but a previewer that does not join the list prints the lines separated by
@@ -44,5 +44,5 @@ def finalize(path):
 
 
 if __name__ == "__main__":
-    j, e = finalize(sys.argv[1] if len(sys.argv) > 1 else "notebook.ipynb")
+    j, e = finalize(sys.argv[1] if len(sys.argv) > 1 else "subthreshold_vga_gmid.ipynb")
     print(f"finalize_nb: {j} output fields joined, {e} cells got embedded images")
