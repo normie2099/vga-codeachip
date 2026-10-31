@@ -9,14 +9,18 @@ IEEE SSCS Code-a-Chip, ISSCC 2027. Notebook: `notebook.ipynb`. License: Apache-2
 **Scope:** the gain core of a hearing-aid compressor and the flow that sizes it. No envelope detector or gain-control
 loop, so no compression behaviour is claimed.
 
-## What this work adds to the earlier Code-a-Chip lookup-table flows (ISSCC'25, ISSCC'26)
-Those flows showed that tables can size a circuit from its specification. This one sizes for all 24 process, temperature and supply corners at once, with one sizing and one layout. It finds that the hand-sized core cannot meet the specification, sizes a designer's fix, and sizes it again after its own first layout broke the pick.
+## One sizing and one layout that hold at every corner: an open flow from specification to signed-off layout
+A subthreshold amplifier is exponentially sensitive to process, temperature and supply. This flow sizes a SKY130 VGA core once for all 24 corners, lays it out, feeds the layout back into the sizing and signs it off. Everything reruns from cached simulations in about a minute.
 
-1. **Exact tables, with measured error.** Current density at fixed bias differs by up to 1.6× (NMOS) and 4.6× (PMOS) between finger widths, so a table made at one width does not carry to another. With whole fingers it does. The model on the tables takes 7.4 ms per design and corner and is within **0.40 dB** (gain) and **1.3 %** (noise) of SPICE on 42 random designs. Its worst bandwidth over-estimate is 17 % (under-estimates reach 74 % and only make the screen stricter), so SPICE decides every pick (§5–§6).
-2. **The hand-sized nine-transistor core cannot reach the 30 dB control range, and the flow says why.** None of 12,164 sizings does (best 10.4 dB). The output devices starve as the gain falls (§3.4, §7).
-3. **A designer's three-transistor fix, then a design that meets every corner.** Two keep-alive sinks and a reference diode remove the starvation (§8). On the 12-transistor core, none of the 138,240 designs of the starting grid met all 24 corners; the search extension found the first one in round 5. Sized at tt alone, the same grid's pick passes at tt but fails 11 of 24 corners in SPICE, 10 of them even without the flow's headroom margin (Table 14b, Figure 7c). The pick passes all 24 gate corners and 21 of 21 stress corners: control range ≥ **47.0 dB**, bandwidth ≥ **11.8 kHz**, headroom ≥ **173 mV**, supply **4.63–4.83 µA** (§9–§10).
-4. **Layout in the loop, then sign-off.** The first layout put 207 fF of wiring on the output and the first pick failed at 6 of 24 corners; the wiring went back into the flow and the new pick passes (§9.3). The final layout is DRC-clean on 3 rule decks natively and 2 in IIC-OSIC-TOOLS, LVS-clean with device sizes in both runs (6 of 6 deliberately altered netlists rejected), with 0 Magic antenna violations. Its extracted netlist passes all 24 corners (bandwidth ≥ 12.3 kHz); with resistance extracted too it passes the gate at the 3 corners that bound it (§13).
-5. **What does not hold.** The pick misses the noise-density target: 60 against 50 nV/√Hz at 1 kHz. Its 6.88 µV of integrated noise meets the 7 µV target at tt, which is the target's condition; it is above 7 µV at 13 of 24 corners (8.4 µV at the noisiest). Supply is 4.95 µA with 3σ mismatch against a 5 µA limit. Monte Carlo, the control port, PSRR and CMRR are schematic-level, and Monte Carlo passes behind an ideal output DC servo that is not built. There is no envelope detector or gain loop: this is a gain core, not a compressor (§14).
+**Result (SPICE, all 24 corners):** control range ≥ **47.0 dB**, bandwidth ≥ **11.8 kHz**, headroom ≥ **173 mV**, supply **4.63–4.83 µA**; NEF **4.08** at tt. The layout is DRC- and LVS-clean, and its capacitance-extracted netlist passes all 24 corners.
+
+1. **Every corner, not only tt.** Sized at tt alone, on the same grid, model, margins and pick rule, the design passes at tt but fails 11 of 24 corners in SPICE, 10 of them even without the flow's headroom margin (Table 14b, Figure 7c below). Our pick passes all 24 gate corners and 21 of 21 held-out stress corners.
+2. **Tables you can trust.** SKY130 picks a model bin from each finger's width, so every transistor is built from whole 5 µm fingers. The table model is within **0.40 dB** (gain) and **1.3 %** (noise) of SPICE on 42 random designs; it can over-estimate bandwidth by up to 17 %, so SPICE decides every pick (§5–§6).
+3. **It says when a circuit cannot work, and why.** None of 12,164 sizings of the hand-designed nine-transistor core reaches the 30 dB control range (best 10.4 dB): its gain hits a floor. We redesigned it as a 12-transistor core, and the flow sized it (§7–§8).
+4. **Layout in the loop.** The first layout's 207 fF of output wiring broke the pick at 6 of 24 corners; it went back into the flow and the new pick passes (§9.3). Sign-off: DRC-clean on 3 rule decks, LVS-clean (6 of 6 deliberately altered netlists rejected); with resistance extracted too, the gate passes at the 3 corners that bound it (§13).
+5. **Reproducible by construction.** Every table and figure is rebuilt from `cache/` by the code in this folder, every number in these summaries is read from `cache/results.json`, and the same code sizes other specifications or reports why none exists (§11).
+
+**What does not hold:** noise density 60 against 50 nV/√Hz at 1 kHz; the 7 µV integrated-noise target is met at tt but exceeded at 13 of 24 corners (8.4 µV at the noisiest); 4.95 µA with 3σ mismatch against a 5 µA limit; Monte Carlo, control port, PSRR and CMRR are schematic-level, and Monte Carlo passes behind an ideal output DC servo that is not built; this is a gain core, not a compressor (§14).
 
 | From hand-sized to flow pick | 9T baseline (hand) | 12T hand screen (8 Oct) | 12T flow pick |
 |:--|:--:|:--:|:--:|
@@ -28,7 +32,7 @@ Those flows showed that tables can size a circuit from its specification. This o
 | Supply current, worst corner (µA) | 6.18 | 5.64 | 4.83 |
 | Drawn gate area (µm²) | 75 | 398 | 17,120 |
 
-*The 9T column is the hand-sized baseline at its worst corner (SPICE); the 10.4 dB of finding 2 is the best of the 12,164 sizings at tt (table model).*
+*The 9T column is the hand-sized baseline at its worst corner (SPICE); the 10.4 dB of finding 3 is the best of the 12,164 sizings at tt (table model).*
 
 ![Worst headroom at every corner: sized at tt alone against the flow's pick](images/tt_only_vs_flow.png)
 
